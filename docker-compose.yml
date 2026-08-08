@@ -1,0 +1,66 @@
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:3.2.0
+    restart: always
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl http://localhost:3000/api/heartbeat
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${APP_SECRET}
+    networks:
+      - umami-core-uyrhql
+    labels:
+      - traefik.http.routers.umami-core-uyrhql-3-web.rule=Host(`umami.seanewing.net`)
+      - traefik.http.routers.umami-core-uyrhql-3-web.entrypoints=web
+      - traefik.http.services.umami-core-uyrhql-3-web.loadbalancer.server.port=3000
+      - traefik.http.routers.umami-core-uyrhql-3-web.service=umami-core-uyrhql-3-web
+      - traefik.http.routers.umami-core-uyrhql-3-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.rule=Host(`umami.seanewing.net`)
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.entrypoints=websecure
+      - traefik.http.services.umami-core-uyrhql-3-websecure.loadbalancer.server.port=3000
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.service=umami-core-uyrhql-3-websecure
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.umami-core-uyrhql-3-web.rule=Host(`umami.seanewing.net`)
+      - traefik.http.routers.umami-core-uyrhql-3-web.entrypoints=web
+      - traefik.http.services.umami-core-uyrhql-3-web.loadbalancer.server.port=3000
+      - traefik.http.routers.umami-core-uyrhql-3-web.service=umami-core-uyrhql-3-web
+      - traefik.http.routers.umami-core-uyrhql-3-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.rule=Host(`umami.seanewing.net`)
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.entrypoints=websecure
+      - traefik.http.services.umami-core-uyrhql-3-websecure.loadbalancer.server.port=3000
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.service=umami-core-uyrhql-3-websecure
+      - traefik.http.routers.umami-core-uyrhql-3-websecure.tls.certresolver=letsencrypt
+      - traefik.enable=true
+  db:
+    image: postgres:17-alpine
+    restart: always
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - umami-core-uyrhql
+volumes:
+  db-data: null
+networks:
+  umami-core-uyrhql:
+    name: umami-core-uyrhql
+    external: true
