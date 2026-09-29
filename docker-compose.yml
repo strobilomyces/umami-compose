@@ -1,6 +1,6 @@
 services:
   umami:
-    image: ghcr.io/umami-software/umami:3.3.1
+    image: ghcr.io/umami-software/umami:3.4.0
     restart: always
     healthcheck:
       test:
